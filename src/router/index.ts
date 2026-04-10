@@ -1,22 +1,42 @@
 // src/router/index.ts
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-// 导入登录页组件
 import LoginPage from '@/pages/login/index.vue'
+import HomePage from '@/pages/home/home.vue'
 
-// 定义路由规则
+// 子页面组件（请根据实际路径调整）
+import Dashboard from '@/pages/home/views/Dashboard.vue'
+import ClusterMonitor from '@/pages/home/views/ClusterMonitor.vue'
+import NodeMonitor from '@/pages/home/views/NodeMonitor.vue'
+import JobMonitor from '@/pages/home/views/JobMonitor.vue'
+import DeviceMonitor from '@/pages/home/views/DeviceMonitor.vue'
+import Profile from '@/pages/home/views/Profile.vue'
+
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/', // 根路径
-    redirect: '/login' // 重定向到登录页
+    path: '/login',
+    name: 'Login',
+    component: LoginPage
   },
   {
-    path: '/login', // 登录页路径
-    name: 'Login',
-    component: LoginPage // 挂载登录页组件
+    path: '/home',
+    name: 'Home',
+    component: HomePage,
+    redirect: '/home/dashboard',   // 默认显示工作台
+    children: [
+      { path: 'dashboard', name: 'dashboard', component: Dashboard },
+      { path: 'cluster',   name: 'cluster',   component: ClusterMonitor },
+      { path: 'node',      name: 'node',      component: NodeMonitor },
+      { path: 'job',       name: 'job',       component: JobMonitor },
+      { path: 'device',    name: 'device',    component: DeviceMonitor },
+      { path: 'profile',   name: 'profile',   component: Profile }
+    ]
+  },
+  {
+    path: '/',
+    redirect: '/login'
   }
 ]
 
-// 创建路由实例
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
