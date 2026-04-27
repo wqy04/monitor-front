@@ -12,7 +12,7 @@
       <div class="info-card">
         <div class="card-header">
           <h2>个人信息</h2>
-          <button class="edit-btn" @click="handleEditProfile">编辑资料</button>
+          <button class="edit-btn" @click="openEditDialog">编辑资料</button>
         </div>
         
         <div class="user-avatar-section">
@@ -58,7 +58,7 @@
         <div class="security-card">
           <div class="card-header">
             <h2>安全设置</h2>
-            <button class="edit-btn" @click="handleChangePassword">修改密码</button>
+            <button class="edit-btn" @click="openPasswordDialog">修改密码</button>
           </div>
         </div>
 
@@ -92,17 +92,68 @@
         </div>
       </div>
     </div>
+
+    <!-- 编辑资料弹窗 -->
+    <div v-if="editDialogVisible" class="modal-overlay" @click.self="closeEditDialog">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3>编辑资料</h3>
+          <button class="modal-close" @click="closeEditDialog">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-item">
+            <label>用户名</label>
+            <input type="text" v-model="editForm.username" placeholder="请输入用户名" />
+          </div>
+          <div class="form-item">
+            <label>所属学院</label>
+            <input type="text" v-model="editForm.department" placeholder="请输入所属学院" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="closeEditDialog">取消</button>
+          <button class="btn-confirm" @click="saveProfile">保存修改</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 修改密码弹窗 -->
+    <div v-if="passwordDialogVisible" class="modal-overlay" @click.self="closePasswordDialog">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3>修改密码</h3>
+          <button class="modal-close" @click="closePasswordDialog">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-item">
+            <label>新密码</label>
+            <input type="password" v-model="passwordForm.newPassword" placeholder="请输入新密码（至少6位）" />
+          </div>
+          <div class="form-item">
+            <label>确认新密码</label>
+            <input type="password" v-model="passwordForm.confirmPassword" placeholder="请再次输入新密码" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="closePasswordDialog">取消</button>
+          <button class="btn-confirm" @click="savePassword">确认修改</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
-import { getUserInfo } from '@/api/user'
+import { getUserInfo, updateUserInfo } from '@/api/user'
 import { getAlertData } from '@/api/alert'
+import { resetPassword } from '@/api/login'
 import RecentAlertsList from '@/pages/home/views/Dashboard/RecentAlertsList.vue'
 
 const userStore = useUserStore()
+const router = useRouter()
 const userInfo = userStore.userInfo
 
 // 用户信息
@@ -138,9 +189,23 @@ const stats = ref({
   activeDays: 18
 })
 
-// 安全设置绑定信息（演示用）
-const bindEmail = ref('zhang.san@university.edu')
-const bindPhone = ref('138****1234')
+// ========== 弹窗相关状态 ==========
+// 编辑资料弹窗
+const editDialogVisible = ref(false)
+const editForm = reactive({
+  username: '',
+  department: ''
+})
+
+// 修改密码弹窗
+const passwordDialogVisible = ref(false)
+const passwordForm = reactive({
+  newPassword: '',
+  confirmPassword: ''
+})
+
+// 模拟当前正确的密码（假数据演示用）
+const mockCurrentPassword = '123456'
 
 // 获取用户信息和告警数据
 const fetchUserData = async () => {
@@ -207,15 +272,95 @@ const formatDate = (dateStr: string): string => {
   return dateStr.replace('T', ' ').substring(0, 19)
 }
 
-// 交互模拟：编辑资料（演示模式）
-const handleEditProfile = () => {
-  alert('演示模式：编辑资料功能尚未接入后端，仅供展示。\n实际开发中将调用 API 更新用户名、学院等信息。')
+// ========== 编辑资料相关方法 ==========
+const openEditDialog = () => {
+  // 打开弹窗前，用当前用户信息填充表单
+  editForm.username = user.value.username || ''
+  editForm.department = user.value.department || ''
+  editDialogVisible.value = true
 }
 
-// 修改密码模拟
-const handleChangePassword = () => {
-  alert('演示模式：修改密码功能未连接真实后端。\n实际流程将校验旧密码并更新数据库。')
+const closeEditDialog = () => {
+  editDialogVisible.value = false
 }
+
+const saveProfile = () => {
+  // 简单的表单校验
+  if (!editForm.username.trim()) {
+    alert('用户名不能为空')
+    return
+  }
+  if (!editForm.department.trim()) {
+    alert('所属学院不能为空')
+    return
+  }
+
+  // 模拟异步保存（假数据）
+  // 更新页面显示的用户信息
+  // user.value.username = editForm.username.trim()
+  // user.value.department = editForm.department.trim()
+  console.log('准备更新用户信息：', {
+    userId: user.value.userId,
+    username: editForm.username.trim(),
+    department: editForm.department.trim()
+  })
+  updateUserInfo({
+    userId: user.value.userId || 0,  // 确保有一个默认值，实际开发中应该有用户ID
+    username: editForm.username.trim(),
+    department: editForm.department.trim()
+  }).then(() => {
+    // 更新成功后刷新用户信息
+    fetchUserData()
+    alert('资料修改成功！')
+    closeEditDialog()
+  }).catch(error => {
+    console.error('更新用户信息失败：', error)
+    alert('保存失败，请稍后再试')
+  })
+}
+
+// ========== 修改密码相关方法 ==========
+const openPasswordDialog = () => {
+  // 清空表单
+  passwordForm.newPassword = ''
+  passwordForm.confirmPassword = ''
+  passwordDialogVisible.value = true
+}
+
+const closePasswordDialog = () => {
+  passwordDialogVisible.value = false
+}
+
+const savePassword = () => {
+  // 获取表单值
+  const newPwd = passwordForm.newPassword
+  const confirmPwd = passwordForm.confirmPassword
+
+  // 2. 验证新密码长度
+  if (!newPwd || newPwd.length < 6) {
+    alert('新密码长度至少为6位')
+    return
+  }
+
+  // 3. 验证新密码与确认密码是否一致
+  if (newPwd !== confirmPwd) {
+    alert('两次输入的新密码不一致，请重新输入')
+    return
+  }
+
+  // 实际开发中这里会调用修改密码的API
+  resetPassword(user.value.username, passwordForm.confirmPassword).then((response) => {
+    console.log('重置密码成功:', response)
+    // 清理本地认证信息并跳回登录页
+    userStore.clearAuth()
+    closePasswordDialog()
+    router.push('/login')
+  }).catch((error) => {
+    console.error('重置密码失败:', error)
+    alert('密码修改失败，请稍后再试')
+  })
+}
+
 </script>
 
 <style scoped>
@@ -393,42 +538,6 @@ const handleChangePassword = () => {
   color: #cb3a2b;
 }
 
-/* 安全设置卡片内部样式 */
-.security-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #eff2f6;
-}
-.security-item:last-child {
-  border-bottom: none;
-}
-.security-label {
-  font-size: 14px;
-  color: #1f2329;
-  font-weight: 500;
-}
-.security-value {
-  font-size: 14px;
-  color: #6e7680;
-  flex: 1;
-  margin-left: 24px;
-}
-.link-btn {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-.link-btn:hover {
-  background: #eff6ff;
-}
-
 /* 使用统计卡片内部样式 */
 .stats-grid {
   display: grid;
@@ -456,6 +565,138 @@ const handleChangePassword = () => {
   margin-top: 6px;
 }
 
+/* ========== 弹窗样式 ========== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal-container {
+  background: #fff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.2);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid #eef2f6;
+}
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2329;
+  margin: 0;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 26px;
+  line-height: 1;
+  color: #8b92a0;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.modal-close:hover {
+  background-color: #f0f2f5;
+  color: #1f2329;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-item {
+  margin-bottom: 20px;
+}
+.form-item label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2329;
+  margin-bottom: 8px;
+}
+.form-item input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.form-item input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #eef2f6;
+}
+.btn-cancel,
+.btn-confirm {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+.btn-cancel {
+  background: #fff;
+  border: 1px solid #d0d5dd;
+  color: #6e7680;
+}
+.btn-cancel:hover {
+  background-color: #f8f9fc;
+  border-color: #b9c0cc;
+}
+.btn-confirm {
+  background: #3b82f6;
+  color: white;
+}
+.btn-confirm:hover {
+  background: #2563eb;
+}
+
 /* 响应式布局，同工作台 */
 @media (max-width: 1000px) {
   .profile-content {
@@ -475,6 +716,10 @@ const handleChangePassword = () => {
   }
   .stats-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .modal-container {
+    width: 95%;
+    margin: 16px;
   }
 }
 </style>

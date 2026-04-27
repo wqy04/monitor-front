@@ -9,5 +9,23 @@ function getAlertData() {
   return request.get('/alerts')
 }
 
+/**
+ * 更新告警状态
+ * @param alertId 告警ID
+ * @param status 传入的状态
+ * @returns 返回的告警状态
+ */
+function updateAlertStatus(alertId: number, status: number) {
+  return request.put(`/alerts/${alertId}/status`, { status })
+}
 
-export { getAlertData}
+/**
+ * 删除告警
+ * @param alertId 告警ID
+ * @returns 删除告警
+ */
+function deleteAlert(alertId: number) {
+  return request.delete(`/alerts/${alertId}`)
+}
+
+export { getAlertData, updateAlertStatus, deleteAlert }
