@@ -83,17 +83,41 @@ service.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // 如果响应码是 401 且还没有重试过，尝试刷新 token
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
+    // // 如果响应码是 401 且还没有重试过，尝试刷新 token
+    // if (error.response?.status === 401 && !originalRequest._retry) {
+    //   originalRequest._retry = true
 
+    //   try {
+    //     const newAccessToken = await refreshAccessToken()
+    //     originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+    //     return service(originalRequest) // 重新发送原始请求
+    //   } catch (refreshError) {
+    //     console.error('Token 刷新失败:', refreshError)
+    //     return Promise.reject(refreshError)
+    //   }
+    // }
+
+    // 响应拦截器中
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // 如果是登出或刷新 token 接口，不进行自动刷新
+      const isAuthEndpoint = originalRequest.url?.includes('/auth/logout') ||
+                            originalRequest.url?.includes('/auth/refresh');
+      if (isAuthEndpoint) {
+        const userStore = useUserStore();
+        userStore.clearAuth();
+        router.push('/login');
+        return Promise.reject(error);
+      }
+
+      // 正常刷新逻辑...
+      originalRequest._retry = true;
       try {
-        const newAccessToken = await refreshAccessToken()
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
-        return service(originalRequest) // 重新发送原始请求
+        const newAccessToken = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return service(originalRequest);
       } catch (refreshError) {
-        console.error('Token 刷新失败:', refreshError)
-        return Promise.reject(refreshError)
+        console.error('Token 刷新失败:', refreshError);
+        return Promise.reject(refreshError);
       }
     }
 

@@ -1,10 +1,9 @@
 <template>
-    <h1>Profile</h1>
+    <h1>Alarm Monitor</h1>
 </template>
 
 <script setup lang="ts">
-
 </script>
-<style lang="less" scoped>
 
+<style lang="less" scoped>
 </style>

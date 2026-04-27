@@ -45,13 +45,14 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
+import { logout } from '@/api/login'
 const imgBaseUrl = import.meta.env.VITE_IMG_BASE_URL
 
 const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
 
-// 用户头像首字母（取姓名第一个字）
+// 用户头像首字母
 const userInitial = computed(() => {
     return userStore.userName ? userStore.userName.charAt(0) : '用'
 })
@@ -61,14 +62,16 @@ const roleClass = computed(() => {
     return userStore.userRole === '系统管理员' ? 'role-admin' : 'role-user'
 })
 
-// 菜单项数据（使用 @ 别名路径，确保图片能被 Vite 正确加载）
+// 菜单项数据
 const menuItems = ref([
     { key: 'dashboard', label: '工作台', icon: `${imgBaseUrl}/images/sideBarIcons/workspace.png` },
     { key: 'cluster',   label: '集群监控', icon: `${imgBaseUrl}/images/sideBarIcons/cluster.png` },
     { key: 'node',      label: '节点监控', icon: `${imgBaseUrl}/images/sideBarIcons/node.png` },
     { key: 'job',       label: '作业监控', icon: `${imgBaseUrl}/images/sideBarIcons/job.png` },
     { key: 'device',    label: '设备监控', icon: `${imgBaseUrl}/images/sideBarIcons/device.png` },
-    { key: 'profile',   label: '个人中心', icon: `${imgBaseUrl}/images/sideBarIcons/profile.png` }
+    { key: 'alarm',     label: '告警管理', icon: `${imgBaseUrl}/images/sideBarIcons/alarm.png` },
+    { key: 'profile',   label: '个人中心', icon: `${imgBaseUrl}/images/sideBarIcons/profile.png` },
+    { key: 'logout',    label: '退出登录', icon: `${imgBaseUrl}/images/sideBarIcons/logout.png` }
 ])
 
 const activeMenu = ref('dashboard')
@@ -86,6 +89,16 @@ watch(() => route.name, updateActiveMenu, { immediate: true })
 
 // 导航到对应页面
 const navigateTo = (key) => {
+    if(key === 'logout') {
+        // 处理退出登录逻辑
+        logout().catch(() => {
+            console.warn('登出请求失败（可能 token 已过期）', err);
+        }).finally(() => {
+            userStore.logout()
+            router.push('/login') // 跳转到登录页
+        }) 
+        return
+    }
     // 如果已经是当前页面，无需重复跳转
     if (activeMenu.value === key) return
     router.push({ name: key })

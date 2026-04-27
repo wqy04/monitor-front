@@ -40,4 +40,13 @@ function resetPassword(username: string, password: string) {
   return request.post('/auth/password',{username, password})
 }
 
-export { login, register, refreshToken, resetPassword }
+/**
+ * 登出接口
+ * @returns 
+ */
+function logout() {  
+  // 例如：
+  return request.post('/auth/logout')  
+}
+
+export { login, register, refreshToken, resetPassword, logout }

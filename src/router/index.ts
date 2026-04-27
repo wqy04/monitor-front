@@ -4,12 +4,13 @@ import LoginPage from '@/pages/login/index.vue'
 import HomePage from '@/pages/home/home.vue'
 
 // 子页面组件（请根据实际路径调整）
-import Dashboard from '@/pages/home/views/Dashboard.vue'
-import ClusterMonitor from '@/pages/home/views/ClusterMonitor.vue'
+import Dashboard from '@/pages/home/views/Dashboard/Dashboard.vue'
+import ClusterMonitor from '@/pages/home/views/ClusterMonitor/ClusterMonitor.vue'
 import NodeMonitor from '@/pages/home/views/NodeMonitor.vue'
 import JobMonitor from '@/pages/home/views/JobMonitor.vue'
 import DeviceMonitor from '@/pages/home/views/DeviceMonitor.vue'
-import Profile from '@/pages/home/views/Profile.vue'
+import AlarmMonitor from '@/pages/home/views/AlarmMonitor.vue'
+import Profile from '@/pages/home/views/Profile/Profile.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -28,6 +29,7 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'node',      name: 'node',      component: NodeMonitor },
       { path: 'job',       name: 'job',       component: JobMonitor },
       { path: 'device',    name: 'device',    component: DeviceMonitor },
+      { path: 'alarm',     name: 'alarm',     component: AlarmMonitor },
       { path: 'profile',   name: 'profile',   component: Profile }
     ]
   },

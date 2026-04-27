@@ -12,7 +12,7 @@ export const useUserStore = defineStore('user', () => {
   const userName = computed(() => userInfo.value?.username || '')
   const userRole = computed(() => {
     const role = userInfo.value?.userRole
-    return role === '0' ? '系统管理员' : '普通用户'
+    return role === 0 ? '系统管理员' : '普通用户'
   })
 
   // 方法
@@ -45,6 +45,10 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('refreshToken')
   }
 
+  const logout = () => {
+    clearAuth()
+  }
+
   return {
     accessToken,
     userInfo,
@@ -56,6 +60,7 @@ export const useUserStore = defineStore('user', () => {
     setUserInfo,
     setRefreshToken,
     getRefreshToken,
-    clearAuth
+    clearAuth,
+    logout
   }
 })
