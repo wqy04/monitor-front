@@ -1,62 +1,59 @@
 <template>
   <div class="chart-card">
     <div class="card-header">
-      <h3>队列作业分布</h3>
+      <h3>队列作业分布Top5</h3>
       <span class="card-desc">各队列运行作业数</span>
     </div>
-    <div ref="chartRef" class="chart-container"></div>
+    
+    <!-- 队列信息列表 -->
+    <div class="queue-info-section">
+      <div class="queue-list">
+        <div v-for="queue in top5Queues" :key="queue.queueId" class="queue-item">
+          <span class="queue-name">{{ queue.queueName }}</span>
+          <span class="job-count">{{ queue.totalJobs }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
+
+interface Queue {
+  queueId: number
+  queueName: string
+  jobsRunning: number
+  jobsPending: number
+  jobsSuspended: number
+  description: string
+  status: string
+  priority: number
+  nice: number
+  maxSlots: number | null
+}
 
 const props = defineProps<{
   cluster: {
-    queueJobs: Array<{ queueName: string; runningJobs: number }>
+    queues?: Queue[]
   }
 }>()
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
 
-const renderChart = () => {
-  if (!chartRef.value || !props.cluster.queueJobs) return
-  if (chart) chart.dispose()
-  chart = echarts.init(chartRef.value)
-  const queues = props.cluster.queueJobs.map(q => q.queueName)
-  const runningJobs = props.cluster.queueJobs.map(q => q.runningJobs)
-  chart.setOption({
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    grid: { left: '10%', right: '5%', top: '10%', bottom: '5%', containLabel: true },
-    xAxis: { type: 'category', data: queues, axisLabel: { rotate: 30, interval: 0 } },
-    yAxis: { type: 'value', name: '运行作业数' },
-    series: [{
-      name: '运行作业数',
-      type: 'bar',
-      data: runningJobs,
-      itemStyle: { borderRadius: [4, 4, 0, 0], color: '#6366f1' },
-      label: { show: true, position: 'top' },
-    }],
-  })
-}
-
-const handleResize = () => chart?.resize()
-
-onMounted(() => {
-  nextTick(renderChart)
-  window.addEventListener('resize', handleResize)
+// 计算前五队列
+const top5Queues = computed(() => {
+  if (!props.cluster.queues) return []
+  const queuesWithTotal = props.cluster.queues.map(queue => ({
+    ...queue,
+    totalJobs: (queue.jobsRunning || 0) + (queue.jobsPending || 0) + (queue.jobsSuspended || 0)
+  }))
+  return queuesWithTotal
+    .sort((a, b) => b.totalJobs - a.totalJobs)
+    .slice(0, 5)
 })
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-  chart?.dispose()
-})
-
-watch(() => props.cluster, () => {
-  nextTick(renderChart)
-}, { deep: true })
 </script>
 
 <style scoped>
@@ -85,5 +82,45 @@ watch(() => props.cluster, () => {
 .chart-container {
   width: 100%;
   height: 280px;
+  margin-bottom: 20px;
+}
+
+.queue-info-section {
+  padding-top:0px;
+}
+
+.queue-info-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #374151;
+}
+
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.queue-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.queue-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.job-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6366f1;
 }
 </style>

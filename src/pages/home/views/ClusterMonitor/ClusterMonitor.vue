@@ -74,6 +74,7 @@ import ClusterInfoCard from './ClusterInfoCard.vue'
 import { getClusterData, getClusterHistoryData, getClusterNodes } from '@/api/cluster'
 import { getAlertData } from '@/api/alert'
 import { getNodeData } from '@/api/node'
+import { getQueueData } from '@/api/queue'
 
 interface ClusterNodeStatus {
   clusterId: number
@@ -97,6 +98,7 @@ interface ClusterNodeStatus {
 const clusters = ref<ClusterNodeStatus[]>([])
 const selectedClusterId = ref(0)
 const clusterHistoryData = ref<any>(null)
+const queues = ref<any[]>([])
 
 // 时间范围选项
 const timeRanges = [
@@ -126,7 +128,7 @@ const topLoadNodes = ref<any[]>([])
 const currentCluster = computed(() => {
   const cluster = clusters.value.find(c => c.clusterId === selectedClusterId.value)
   // console.log('Current cluster:', cluster)
-  return cluster
+  return cluster ? { ...cluster, queues: queues.value } : null
 })
 
 // ---------- API 请求函数 ----------
@@ -134,7 +136,7 @@ const fetchClusterHistory = async (clusterId: number, range: string = selectedRa
   if (!clusterId) return
   try {
     const res = await getClusterHistoryData(clusterId, { range })
-    if (res.code === 200 && res.data) {
+    if (res.data) {
       clusterHistoryData.value = res.data
       console.log(`集群历史数据已加载 (${range})`, res.data)
     } else {
@@ -152,7 +154,7 @@ const fetchClusterNodes = async (clusterId: number) => {
     const res = await getClusterNodes(clusterId)
    
     console.log('Cluster nodes response:', res)
-    if (res.code === 200 && res.data) {
+    if (res.data) {
       const nodes = res.data.nodes || []
       const current = clusters.value.find(c => c.clusterId === clusterId)
       if (current) {
@@ -180,20 +182,22 @@ const handleClusterChange = (clusterId: number) => {
 // ---------- 初始化数据 ----------
 const updateAggregatedStats = async () => {
   try {
-    const [clusterRes, nodeRes, alertRes] = await Promise.all([
+    const [clusterRes, nodeRes, alertRes, queueRes] = await Promise.all([
       getClusterData(),
       getNodeData(),
-      getAlertData()
+      getAlertData(),
+      getQueueData()
     ])
 
     const rawClusters = clusterRes.data
     clusters.value = rawClusters.clusters || []
+    queues.value = queueRes.data?.queues || []
 
     // 处理集群选中及历史数据加载
     if (clusters.value.length > 0) {
       const exists = clusters.value.some(c => c.clusterId === selectedClusterId.value)
       if (!exists) {
-        selectedClusterId.value = clusters.value[0].clusterId
+        selectedClusterId.value = clusters.value[0]!.clusterId
         console.log('首次加载，自动选中集群ID:', selectedClusterId.value)
         await Promise.all([
           fetchClusterHistory(selectedClusterId.value, selectedRange.value),

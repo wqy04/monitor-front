@@ -61,35 +61,6 @@
             <button class="edit-btn" @click="openPasswordDialog">修改密码</button>
           </div>
         </div>
-
-        <!-- 使用统计卡片 -->
-        <div class="stats-card">
-          <div class="card-header">
-            <h2>使用统计</h2>
-          </div>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <div class="stat-number">{{ stats.totalJobs }}</div>
-              <div class="stat-label">总作业数</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">{{ stats.runningJobs }}</div>
-              <div class="stat-label">运行中</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">{{ stats.pendingJobs }}</div>
-              <div class="stat-label">排队中</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">{{ stats.storageUsed }}<span class="stat-unit">GB</span></div>
-              <div class="stat-label">已用存储</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">{{ stats.activeDays }}</div>
-              <div class="stat-label">本月活跃天数</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 

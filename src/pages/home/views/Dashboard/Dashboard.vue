@@ -18,7 +18,7 @@
       <KpiCard type="running" label="运行中作业" :value="runningJobs" desc="正在执行的作业" />
       <KpiCard type="pending" label="排队作业" :value="pendingJobs" desc="等待调度的作业" />
       <KpiCard type="alert" label="未解决告警" :value="unsolvedAlerts" desc="待处理告警信息" />
-      <KpiCard type="device" label="设备在线率" :value="deviceOnlineRate" suffix="%" desc="UPS/空调等设备" />
+      <!-- <KpiCard type="device" label="设备在线率" :value="deviceOnlineRate" suffix="%" desc="UPS/空调等设备" /> -->
     </div>
 
     <!-- 集群健康状态概览区域 -->
@@ -57,6 +57,7 @@ import { ref, onMounted } from 'vue'
 import { getClusterData } from '@/api/cluster'
 import { getNodeData } from '@/api/node'
 import { getAlertData } from '@/api/alert'
+import { getQueueData } from '@/api/queue'
 import KpiCard from './KpiCard.vue'
 import ClusterHealthCard from './ClusterHealthCard.vue'
 import RecentAlertsList from './RecentAlertsList.vue'
@@ -69,7 +70,7 @@ const nodeOffline = ref<number>(0)
 const runningJobs = ref<number>(0)      // 正在运行中的作业
 const pendingJobs = ref<number>(0)       // 排队作业
 const unsolvedAlerts = ref<number>(0)    // 未解决告警数
-const deviceOnlineRate = ref<number>(0) // 设备在线率
+// const deviceOnlineRate = ref<number>(0) // 设备在线率
 
 // 集群列表类型
 interface ClusterNodeStatus {
@@ -99,13 +100,20 @@ const nodeList = ref<any[]>([])
 
 const getKpiData = async () => {
   try {
-    const [clusterRes, nodeRes, alertRes] = await Promise.all([getClusterData(), getNodeData(), getAlertData()])
+    const [clusterRes, nodeRes, alertRes, queueRes] = await Promise.all([
+      getClusterData(), 
+      getNodeData(), 
+      getAlertData(),
+      getQueueData()
+    ])
     const clusters = clusterRes.data
     const nodes = nodeRes.data.nodes
     const alerts = alertRes.data.list
+    const queues = queueRes.data?.queues || []
     console.log('原始集群数据:', clusters)
     console.log('告警列表:', alerts)
     console.log('节点列表:', nodes)
+    console.log('队列数据:', queues)
     alertList.value = alerts
     unsolvedAlerts.value = alerts.length
     nodeList.value = nodes
@@ -113,6 +121,10 @@ const getKpiData = async () => {
     clusterTotal.value = clusters.summary.totalClusterCount || 0
     nodeTotal.value = clusters.summary.totalNodeCount || 0
     nodeOffline.value = clusters.summary.totalOfflineNodeCount || 0
+    
+    // 计算运行中和等待作业数
+    runningJobs.value = queues.reduce((sum: number, q: any) => sum + (q.jobsRunning || 0), 0)
+    pendingJobs.value = queues.reduce((sum: number, q: any) => sum + (q.jobsPending || 0), 0)
     
   } catch (error) {
     console.error('获取KPI数据失败：', error)

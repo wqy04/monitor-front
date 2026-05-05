@@ -8,9 +8,10 @@ import Dashboard from '@/pages/home/views/Dashboard/Dashboard.vue'
 import ClusterMonitor from '@/pages/home/views/ClusterMonitor/ClusterMonitor.vue'
 import NodeMonitor from '@/pages/home/views/NodeMonitor.vue'
 import JobMonitor from '@/pages/home/views/JobMonitor.vue'
-import DeviceMonitor from '@/pages/home/views/DeviceMonitor.vue'
+import UserMonitor from '@/pages/home/views/UserMonitor.vue'
 import AlarmMonitor from '@/pages/home/views/AlarmMonitor.vue'
 import Profile from '@/pages/home/views/Profile/Profile.vue'
+import AppMonitor from '@/pages/home/views/AppMonitor.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -28,9 +29,10 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'cluster',   name: 'cluster',   component: ClusterMonitor },
       { path: 'node',      name: 'node',      component: NodeMonitor },
       { path: 'job',       name: 'job',       component: JobMonitor },
-      { path: 'device',    name: 'device',    component: DeviceMonitor },
+      { path: 'user',      name: 'user',      component: UserMonitor },
       { path: 'alarm',     name: 'alarm',     component: AlarmMonitor },
-      { path: 'profile',   name: 'profile',   component: Profile }
+      { path: 'profile',   name: 'profile',   component: Profile },
+      { path: 'apps',      name: 'apps',      component: AppMonitor }
     ]
   },
   {

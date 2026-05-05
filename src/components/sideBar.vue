@@ -68,7 +68,8 @@ const menuItems = ref([
     { key: 'cluster',   label: '集群监控', icon: `${imgBaseUrl}/images/sideBarIcons/cluster.png` },
     { key: 'node',      label: '节点监控', icon: `${imgBaseUrl}/images/sideBarIcons/node.png` },
     { key: 'job',       label: '作业监控', icon: `${imgBaseUrl}/images/sideBarIcons/job.png` },
-    { key: 'device',    label: '设备监控', icon: `${imgBaseUrl}/images/sideBarIcons/device.png` },
+    { key: 'user',      label: '用户管理', icon: `${imgBaseUrl}/images/sideBarIcons/user.png` },
+    { key: 'apps',      label: '应用监控', icon: `${imgBaseUrl}/images/sideBarIcons/apps.png` },
     { key: 'alarm',     label: '告警管理', icon: `${imgBaseUrl}/images/sideBarIcons/alarm.png` },
     { key: 'profile',   label: '个人中心', icon: `${imgBaseUrl}/images/sideBarIcons/profile.png` },
     { key: 'logout',    label: '退出登录', icon: `${imgBaseUrl}/images/sideBarIcons/logout.png` }

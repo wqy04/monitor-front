@@ -1,6 +1,5 @@
 // 用户相关接口
 import request from '@/utils/request'
-import type { number } from 'echarts/core'
 export interface User {
   userId?: number           
   username: string
@@ -27,4 +26,12 @@ function getUserInfo(userId: number) {
 function updateUserInfo(user: User) {
   return request.put<Record<string, never>>('/user', user)
 }
-export { getUserInfo, updateUserInfo }
+
+/**
+ * 获取Prometheus内的用户数据
+ * @returns 返回Prometheus内的用户数据
+ */
+function prometheusUserData() {
+  return request.get('/user/prometheus-data')
+}
+export { getUserInfo, updateUserInfo, prometheusUserData }
