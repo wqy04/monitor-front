@@ -12,7 +12,11 @@
     <!-- 多集群切换区域 -->
     <div class="cluster-switch-section">
       <div class="section-header">
+        <div class="action-section">
         <h2>集群详情</h2>
+        <!-- 操作按钮区域 -->
+          <button class="view-nodes-btn" @click="viewClusterNodes">查看当前集群节点</button>
+        </div>
         <p class="section-desc">查看单个集群深度指标，支持多集群切换</p>
       </div>
       <ClusterTabs
@@ -58,11 +62,14 @@
 
       <ClusterInfoCard :cluster="currentCluster" />
     </div>
+
+    
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import KPICards from './KPICards.vue'
 import ClusterTabs from './ClusterTabs.vue'
 import HealthChart from './HealthChart.vue'
@@ -100,6 +107,9 @@ const selectedClusterId = ref(0)
 const clusterHistoryData = ref<any>(null)
 const queues = ref<any[]>([])
 
+// Router
+const router = useRouter()
+
 // 时间范围选项
 const timeRanges = [
   { label: '1小时', value: '1h' },
@@ -127,7 +137,7 @@ const topLoadNodes = ref<any[]>([])
 // ---------- 计算属性 ----------
 const currentCluster = computed(() => {
   const cluster = clusters.value.find(c => c.clusterId === selectedClusterId.value)
-  // console.log('Current cluster:', cluster)
+  console.log('Current cluster:', cluster)
   return cluster ? { ...cluster, queues: queues.value } : null
 })
 
@@ -159,6 +169,7 @@ const fetchClusterNodes = async (clusterId: number) => {
       const current = clusters.value.find(c => c.clusterId === clusterId)
       if (current) {
         topLoadNodes.value = nodes.sort((a: { cpu_util_percent: number }, b: { cpu_util_percent: number }) => b.cpu_util_percent - a.cpu_util_percent).slice(0, 5)
+        console.log('Top 5 load nodes:', topLoadNodes.value)
       }
     }
   } catch (error) {
@@ -177,6 +188,12 @@ const changeTimeRange = (range: string) => {
 const handleClusterChange = (clusterId: number) => {
   selectedClusterId.value = clusterId
   fetchClusterHistory(clusterId, selectedRange.value)
+}
+
+const viewClusterNodes = () => {
+  if (currentCluster.value) {
+    router.push({ name: 'node', query: { clusterName: currentCluster.value.name } })
+  }
 }
 
 // ---------- 初始化数据 ----------
@@ -338,6 +355,31 @@ onMounted(() => {
   background: #3b82f6;
   border-color: #3b82f6;
   color: white;
+}
+
+/* 操作按钮区域 */
+.action-section {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.view-nodes-btn {
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-nodes-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 1200px) {

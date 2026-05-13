@@ -338,6 +338,7 @@ const fetchClustersAndAlerts = async () => {
     const clustersList = clusterData.clusters || []
     clusterOptions.value = clustersList.map((c: any) => c.clusterName).filter(Boolean)
     console.log('集群名称列表:', clusterOptions.value)
+    console.log('告警数据:', alertRes.data)
     // 解析告警列表: 依据工作台 alertRes.data.list
     let alertList: AlertItem[] = []
     if (alertRes.data && Array.isArray(alertRes.data.list)) {

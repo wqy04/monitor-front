@@ -2,24 +2,19 @@
   <div class="node-monitor-container">
     <!-- 页面标题区 -->
     <div class="monitor-header">
-      <h1>节点监控</h1>
+      <div class="header-top">
+        <button class="back-btn" @click="goBack">
+          <span class="back-icon">←</span>
+          返回集群监控
+        </button>
+      </div>
+      <h1>{{ pageTitle }}</h1>
       <p class="subtitle">实时查看集群节点的资源状态、负载与健康信息</p>
     </div>
 
     <!-- 筛选栏卡片 - 使用 Naive UI 组件 -->
     <div class="filter-card">
       <div class="filter-row">
-        <div class="filter-group">
-          <label>所属集群</label>
-          <n-select
-            v-model:value="filters.clusterId"
-            :options="clusterOptions"
-            placeholder="全部集群"
-            clearable
-            size="small"
-            style="width: 160px"
-          />
-        </div>
         <div class="filter-group">
           <label>节点状态</label>
           <n-select
@@ -72,7 +67,7 @@
           </div>
           <div class="node-badges">
             <span class="status-badge" :class="getStatusClass(node.status)">
-              {{ node.status === 'ok' ? '正常' : '不可用' }}
+              {{ node.status === 'ok' ? '正常' : (node.status === 'unavail' ? '不可用' : '关闭') }}
             </span>
             <span class="type-badge" :class="getTypeClass(derivedNodeType(node))">
               {{ derivedNodeType(node) }}
@@ -190,6 +185,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { NSelect, NButton, NSpin } from 'naive-ui'
 import { getQueueData } from '@/api/queue'
 import { getNodeData } from '@/api/node'
@@ -249,6 +245,17 @@ const queueList = ref<any[]>([])
 const clusters = ref<ClusterInfo[]>([])   // 存储集群列表
 const loading = ref(true)
 
+// Router
+const route = useRoute()
+const router = useRouter()
+
+// ---------- 计算属性 ----------
+// 动态标题
+const pageTitle = computed(() => {
+  const clusterName = route.query.clusterName as string
+  return clusterName ? `${clusterName} 集群节点监控` : '节点监控'
+})
+
 // 筛选条件
 const filters = reactive({
   clusterId: null as number | null,
@@ -259,7 +266,8 @@ const filters = reactive({
 // 筛选选项配置
 const statusOptions = [
   { label: '正常', value: 'ok' },
-  { label: '不可用', value: 'unavail' }
+  { label: '不可用', value: 'unavail' },
+  { label: '关闭', value: 'closed' }
 ]
 
 const nodeTypeOptions = [
@@ -295,9 +303,18 @@ const filteredNodes = computed(() => {
 
 // 重置筛选
 const resetFilters = () => {
-  filters.clusterId = null
+  // 如果是从集群跳转来的，不重置 clusterId
+  const clusterName = route.query.clusterName as string
+  if (!clusterName) {
+    filters.clusterId = null
+  }
   filters.status = null
   filters.nodeType = null
+}
+
+// 返回到集群监控页面
+const goBack = () => {
+  router.push({ name: 'cluster' })
 }
 
 // 衍生节点类型（增加大内存节点判定）
@@ -405,8 +422,16 @@ const initData = async () => {
   }
 }
 
-onMounted(() => {
-  initData()
+onMounted(async () => {
+  await initData()
+  // 从 query 参数获取集群名称并设置筛选
+  const clusterName = route.query.clusterName as string
+  if (clusterName) {
+    const cluster = clusters.value.find(c => c.clusterName === clusterName)
+    if (cluster) {
+      filters.clusterId = cluster.clusterId
+    }
+  }
 })
 </script>
 
@@ -422,6 +447,29 @@ onMounted(() => {
 
 .monitor-header {
   margin-bottom: 24px;
+}
+.header-top {
+  margin-bottom: 16px;
+}
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f5f7fa;
+  border: 1px solid #e2e6ed;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1f2329;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.back-btn:hover {
+  background: #e2e6ed;
+}
+.back-icon {
+  font-size: 16px;
+  font-weight: bold;
 }
 .monitor-header h1 {
   font-size: 24px;

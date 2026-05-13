@@ -66,7 +66,6 @@ const roleClass = computed(() => {
 const menuItems = ref([
     { key: 'dashboard', label: '工作台', icon: `${imgBaseUrl}/images/sideBarIcons/workspace.png` },
     { key: 'cluster',   label: '集群监控', icon: `${imgBaseUrl}/images/sideBarIcons/cluster.png` },
-    { key: 'node',      label: '节点监控', icon: `${imgBaseUrl}/images/sideBarIcons/node.png` },
     { key: 'job',       label: '作业监控', icon: `${imgBaseUrl}/images/sideBarIcons/job.png` },
     { key: 'user',      label: '用户管理', icon: `${imgBaseUrl}/images/sideBarIcons/user.png` },
     { key: 'apps',      label: '应用监控', icon: `${imgBaseUrl}/images/sideBarIcons/apps.png` },

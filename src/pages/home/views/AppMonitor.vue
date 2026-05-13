@@ -6,9 +6,9 @@
         <h1>应用监控</h1>
         <p class="subtitle">查看所有应用及其作业运行状态</p>
       </div>
-      <button class="refresh-btn" @click="fetchAppData" :disabled="loading">
+      <!-- <button class="refresh-btn" @click="fetchAppData" :disabled="loading">
         <span class="refresh-icon">↻</span> {{ loading ? '刷新中...' : '刷新数据' }}
-      </button>
+      </button> -->
     </div>
 
     <!-- 统计卡片区 -->
