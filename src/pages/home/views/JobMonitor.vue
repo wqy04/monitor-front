@@ -78,8 +78,8 @@
             <option v-for="q in queueFilterOptions" :key="q" :value="q">{{ q }}</option>
           </select>
         </div>
-        <!-- 用户筛选框仅对管理员可见 -->
-        <div class="filter-item" v-if="isAdmin">
+        <!-- 用户筛选框对所有用户可见 -->
+        <div class="filter-item">
           <label>用户：</label>
           <select v-model="filterUser" class="filter-select">
             <option value="">全部用户</option>
@@ -189,7 +189,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useUserStore } from '@/stores/userStore'
 import { getQueueData } from '@/api/queue'
 import request from '@/utils/request'
 
@@ -222,15 +221,9 @@ interface Job {
   status: string | null
 }
 
-// 获取用户Store信息
-const userStore = useUserStore()
-const currentUser = computed(() => userStore.userInfo)
-// 判断是否为管理员（userRole === 0 表示管理员）
-const isAdmin = computed(() => currentUser.value?.userRole === 0)
-
 const loading = ref(false)
 const queues = ref<Queue[]>([])
-const allJobs = ref<Job[]>([])                 // 后端全部作业（一次拉取）
+const allJobs = ref<Job[]>([])                 // 全部作业（一次拉取）
 
 // 筛选与分页状态
 const filterQueue = ref('')
@@ -241,32 +234,15 @@ const pageSize = ref(20)                      // 每页显示条数
 const jumpPage = ref(1)
 
 /**
- * 权限过滤后的作业列表
- * - 管理员：可以看到所有作业
- * - 普通用户：只能看到自己的作业（根据 username 匹配）
- */
-const authorizedJobs = computed(() => {
-  if (!allJobs.value.length) return []
-  if (isAdmin.value) return allJobs.value
-  const currentUsername = currentUser.value?.username
-  if (!currentUsername) return []
-  return allJobs.value.filter(job => job.username === currentUsername)
-})
-
-/**
- * 队列下拉选项
- * - 管理员：显示所有队列（基于 allJobs）
- * - 普通用户：只显示自己作业中出现的队列（基于 authorizedJobs）
+ * 队列下拉选项 - 基于所有作业中出现的队列
  */
 const queueFilterOptions = computed(() => {
-  const sourceJobs = isAdmin.value ? allJobs.value : authorizedJobs.value
-  const queuesSet = new Set(sourceJobs.map(j => j.queue).filter(Boolean))
+  const queuesSet = new Set(allJobs.value.map(j => j.queue).filter(Boolean))
   return Array.from(queuesSet).sort()
 })
 
 /**
- * 用户下拉选项（仅管理员会用到这个下拉框）
- * 基于全量作业 allJobs 获取所有用户列表
+ * 用户下拉选项 - 基于所有作业中出现的用户
  */
 const uniqueUsers = computed(() => {
   const usersSet = new Set(allJobs.value.map(j => j.username).filter(Boolean))
@@ -274,18 +250,19 @@ const uniqueUsers = computed(() => {
 })
 
 /**
- * 最终用于展示的作业列表（在权限过滤的基础上再进行队列、用户、搜索筛选）
+ * 最终用于展示的作业列表（在全部作业的基础上进行队列、用户、搜索筛选）
+ * 所有用户均可查看全部作业，无权限限制
  */
 const filteredJobs = computed(() => {
-  let jobs = authorizedJobs.value
+  let jobs = allJobs.value
 
   // 队列筛选
   if (filterQueue.value) {
     jobs = jobs.filter(j => j.queue === filterQueue.value)
   }
 
-  // 用户筛选（仅管理员生效，普通用户不会显示该筛选框，filterUser 始终为空）
-  if (isAdmin.value && filterUser.value) {
+  // 用户筛选
+  if (filterUser.value) {
     jobs = jobs.filter(j => j.username === filterUser.value)
   }
 
@@ -311,7 +288,7 @@ const paginatedJobs = computed(() => {
   return filteredJobs.value.slice(start, end)
 })
 
-// 统计计算（基于队列数据，保持不变）
+// 统计计算（基于队列数据）
 const totalRunningJobs = computed(() => queues.value.reduce((sum, q) => sum + (q.jobsRunning || 0), 0))
 const totalPendingJobs = computed(() => queues.value.reduce((sum, q) => sum + (q.jobsPending || 0), 0))
 const totalQueues = computed(() => queues.value.length)
@@ -386,11 +363,12 @@ const initData = async () => {
   try {
     const [queueResp, jobResp] = await Promise.all([
       getQueueData(),
-      request.get('/jobs', { params: { pageNum: 1, pageSize: 10000 } })
+      request.get('/jobs', { params: { pageNum: 1, pageSize: 100000 } }) // 使用足够大的pageSize获取全部作业
     ])
     queues.value = queueResp.data?.queues || []
     allJobs.value = jobResp.data?.list || []
     console.log('加载的作业数据:', allJobs.value)
+    console.log('加载的队列数据:', queues.value)
   } catch (error) {
     console.error('加载数据失败：', error)
   } finally {

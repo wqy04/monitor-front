@@ -62,17 +62,25 @@ const roleClass = computed(() => {
     return userStore.userRole === '系统管理员' ? 'role-admin' : 'role-user'
 })
 
-// 菜单项数据
-const menuItems = ref([
-    { key: 'dashboard', label: '工作台', icon: `${imgBaseUrl}/images/sideBarIcons/workspace.png` },
-    { key: 'cluster',   label: '集群监控', icon: `${imgBaseUrl}/images/sideBarIcons/cluster.png` },
-    { key: 'job',       label: '作业监控', icon: `${imgBaseUrl}/images/sideBarIcons/job.png` },
-    { key: 'user',      label: '用户管理', icon: `${imgBaseUrl}/images/sideBarIcons/user.png` },
-    { key: 'apps',      label: '应用监控', icon: `${imgBaseUrl}/images/sideBarIcons/apps.png` },
-    { key: 'alarm',     label: '告警管理', icon: `${imgBaseUrl}/images/sideBarIcons/alarm.png` },
-    { key: 'profile',   label: '个人中心', icon: `${imgBaseUrl}/images/sideBarIcons/profile.png` },
-    { key: 'logout',    label: '退出登录', icon: `${imgBaseUrl}/images/sideBarIcons/logout.png` }
-])
+// 菜单项数据，普通用户不显示“用户管理”
+const menuItems = computed(() => {
+    const items = [
+        { key: 'dashboard', label: '工作台', icon: `${imgBaseUrl}/images/sideBarIcons/workspace.png` },
+        { key: 'cluster',   label: '集群监控', icon: `${imgBaseUrl}/images/sideBarIcons/cluster.png` },
+        { key: 'job',       label: '作业监控', icon: `${imgBaseUrl}/images/sideBarIcons/job.png` },
+        { key: 'user',      label: '用户管理', icon: `${imgBaseUrl}/images/sideBarIcons/user.png` },
+        { key: 'apps',      label: '应用监控', icon: `${imgBaseUrl}/images/sideBarIcons/apps.png` },
+        { key: 'alarm',     label: '告警管理', icon: `${imgBaseUrl}/images/sideBarIcons/alarm.png` },
+        { key: 'profile',   label: '个人中心', icon: `${imgBaseUrl}/images/sideBarIcons/profile.png` },
+        { key: 'logout',    label: '退出登录', icon: `${imgBaseUrl}/images/sideBarIcons/logout.png` }
+    ]
+
+    if (userStore.userRole !== '系统管理员') {
+        return items.filter(item => item.key !== 'user')
+    }
+
+    return items
+})
 
 const activeMenu = ref('dashboard')
 

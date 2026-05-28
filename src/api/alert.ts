@@ -5,8 +5,16 @@ import request from '@/utils/request'
  * 获取告警信息
  * @returns 告警详细信息
  */
-function getAlertData() {
-  return request.get('/alerts')
+// 支持分页参数
+function getAlertData(params?: {
+  pageNum?: number;
+  pageSize?: number;
+  status?: number;
+  level?: number;
+  target?: string;
+  notice?: string;
+}) {
+  return request.get('/alerts', { params });
 }
 
 /**

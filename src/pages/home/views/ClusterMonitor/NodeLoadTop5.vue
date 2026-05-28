@@ -8,9 +8,9 @@
       <div v-for="node in nodes" :key="node.nodeName" class="load-item">
         <div class="node-name">{{ node.nodeName }}</div>
         <div class="load-bar-wrapper">
-          <div class="load-bar" :style="{ width: node.cpu_util_percent + '%', backgroundColor: node.cpu_util_percent > 80 ? '#ef4444' : '#3b82f6' }"></div>
+          <div class="load-bar" :style="{ width: node.cpuUtilPercent + '%', backgroundColor: node.cpuUtilPercent > 80 ? '#ef4444' : '#3b82f6' }"></div>
         </div>
-        <div class="load-value">{{ node.cpu_util_percent }}%</div>
+        <div class="load-value">{{ node.cpuUtilPercent }}%</div>
       </div>
     </div>
   </div>
@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 defineProps<{
-  nodes: Array<{ nodeName: string; cpu_util_percent: number }>
+  nodes: Array<{ nodeName: string; cpuUtilPercent: number }>
 }>()
 </script>
 

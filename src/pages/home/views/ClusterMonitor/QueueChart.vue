@@ -46,6 +46,7 @@ let chart: echarts.ECharts | null = null
 // 计算前五队列
 const top5Queues = computed(() => {
   if (!props.cluster.queues) return []
+  console.log('计算 top5Queues，原始队列数据:', props.cluster.queues) // 调试输出
   const queuesWithTotal = props.cluster.queues.map(queue => ({
     ...queue,
     totalJobs: (queue.jobsRunning || 0) + (queue.jobsPending || 0) + (queue.jobsSuspended || 0)

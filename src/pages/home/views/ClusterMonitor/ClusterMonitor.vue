@@ -85,7 +85,8 @@ import { getQueueData } from '@/api/queue'
 
 interface ClusterNodeStatus {
   clusterId: number
-  name: string
+  clusterName?: string
+  name?: string
   nodeTotal: number
   instance: string
   prometheusJob: string
@@ -106,6 +107,7 @@ const clusters = ref<ClusterNodeStatus[]>([])
 const selectedClusterId = ref(0)
 const clusterHistoryData = ref<any>(null)
 const queues = ref<any[]>([])
+const clusterQueues = ref<any[]>([])
 
 // Router
 const router = useRouter()
@@ -137,8 +139,10 @@ const topLoadNodes = ref<any[]>([])
 // ---------- 计算属性 ----------
 const currentCluster = computed(() => {
   const cluster = clusters.value.find(c => c.clusterId === selectedClusterId.value)
-  console.log('Current cluster:', cluster)
-  return cluster ? { ...cluster, queues: queues.value } : null
+  if (!cluster) return null
+  const clusterName = cluster.clusterName || cluster.name || ''
+  console.log('Current cluster:', clusters.value)
+  return { ...cluster, name: clusterName, queues: clusterQueues.value }
 })
 
 // ---------- API 请求函数 ----------
@@ -158,19 +162,36 @@ const fetchClusterHistory = async (clusterId: number, range: string = selectedRa
   }
 }
 
+const filterClusterQueues = (clusterId: number) => {
+  const cluster = clusters.value.find(c => c.clusterId === clusterId)
+  if (!cluster) return []
+  const clusterName = cluster.clusterName || cluster.name || ''
+  return queues.value.filter((queue: any) => {
+    const queueClusterId = queue.clusterId != null ? String(queue.clusterId) : ''
+    return (
+      queueClusterId === String(clusterId) ||
+      queue.clusterName === clusterName
+    )
+  })
+}
+
+const fetchClusterQueues = async (clusterId: number) => {
+  if (!clusterId) return
+  // 使用已加载的全量队列数据按当前集群筛选出队列 TOP5
+  clusterQueues.value = filterClusterQueues(clusterId)
+}
+
 const fetchClusterNodes = async (clusterId: number) => {
   if (!clusterId) return
   try {
     const res = await getClusterNodes(clusterId)
-   
     console.log('Cluster nodes response:', res)
     if (res.data) {
       const nodes = res.data.nodes || []
-      const current = clusters.value.find(c => c.clusterId === clusterId)
-      if (current) {
-        topLoadNodes.value = nodes.sort((a: { cpu_util_percent: number }, b: { cpu_util_percent: number }) => b.cpu_util_percent - a.cpu_util_percent).slice(0, 5)
-        console.log('Top 5 load nodes:', topLoadNodes.value)
-      }
+      topLoadNodes.value = nodes
+        .sort((a: { cpuUtilPercent: number }, b: { cpuUtilPercent: number }) => b.cpuUtilPercent - a.cpuUtilPercent)
+        .slice(0, 5)
+      console.log('Top 5 load nodes:', topLoadNodes.value)
     }
   } catch (error) {
     console.error('获取集群节点数据失败:', error)
@@ -188,6 +209,8 @@ const changeTimeRange = (range: string) => {
 const handleClusterChange = (clusterId: number) => {
   selectedClusterId.value = clusterId
   fetchClusterHistory(clusterId, selectedRange.value)
+  fetchClusterNodes(clusterId)
+  fetchClusterQueues(clusterId)
 }
 
 const viewClusterNodes = () => {
@@ -218,12 +241,17 @@ const updateAggregatedStats = async () => {
         console.log('首次加载，自动选中集群ID:', selectedClusterId.value)
         await Promise.all([
           fetchClusterHistory(selectedClusterId.value, selectedRange.value),
-          fetchClusterNodes(selectedClusterId.value)
+          fetchClusterNodes(selectedClusterId.value),
+          fetchClusterQueues(selectedClusterId.value)
         ])
       } else {
         if (!clusterHistoryData.value || clusterHistoryData.value.clusterId !== selectedClusterId.value) {
           await fetchClusterHistory(selectedClusterId.value, selectedRange.value)
         }
+        await Promise.all([
+          fetchClusterNodes(selectedClusterId.value),
+          fetchClusterQueues(selectedClusterId.value)
+        ])
       }
     }
 

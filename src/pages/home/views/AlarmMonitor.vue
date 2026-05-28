@@ -328,43 +328,41 @@ const nextPage = () => {
 
 // ---------- 数据加载 ----------
 const fetchClustersAndAlerts = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    // 并发获取集群列表和告警列表 (保持与工作台风格一致)
-    const [clusterRes, alertRes] = await Promise.all([getClusterData(), getAlertData()])
-    console.log('集群数据:', clusterRes.data)
-    // 解析集群名称用于过滤下拉
-    const clusterData = clusterRes.data
-    const clustersList = clusterData.clusters || []
-    clusterOptions.value = clustersList.map((c: any) => c.clusterName).filter(Boolean)
-    console.log('集群名称列表:', clusterOptions.value)
-    console.log('告警数据:', alertRes.data)
-    // 解析告警列表: 依据工作台 alertRes.data.list
-    let alertList: AlertItem[] = []
+    // 一次性获取全部告警数据（pageSize 设置足够大）
+    const [clusterRes, alertRes] = await Promise.all([
+      getClusterData(),
+      getAlertData({ pageNum: 1, pageSize: 10000 })  // 关键修改
+    ]);
+
+    // 以下解析逻辑保持不变
+    const clusterData = clusterRes.data;
+    const clustersList = clusterData.clusters || [];
+    clusterOptions.value = clustersList.map((c: any) => c.clusterName).filter(Boolean);
+
+    let alertList: AlertItem[] = [];
     if (alertRes.data && Array.isArray(alertRes.data.list)) {
-      alertList = alertRes.data.list
+      alertList = alertRes.data.list;
     } else if (Array.isArray(alertRes.data)) {
-      // 兼容直接返回数组的情况
-      alertList = alertRes.data
+      alertList = alertRes.data;
     } else {
-      alertList = []
+      alertList = [];
     }
-    
-    // 对每条告警做数据规范化：status字段若不存在，默认为0 (未解决)
+
     alertsRaw.value = alertList.map(alert => ({
       ...alert,
       status: alert.status !== undefined ? alert.status : 0
-    }))
-    
-    // 初始加载后重置分页和筛选条件（筛选保持默认空值）
-    resetPagination()
+    }));
+
+    resetPagination();
   } catch (error) {
-    console.error('获取告警数据失败:', error)
-    alertsRaw.value = []
+    console.error('获取告警数据失败:', error);
+    alertsRaw.value = [];
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 onMounted(() => {
   fetchClustersAndAlerts()
